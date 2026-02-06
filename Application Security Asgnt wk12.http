@@ -1,0 +1,6 @@
+@Application_Security_Asgnt_wk12_HostAddress = http://localhost:5064
+
+GET {{Application_Security_Asgnt_wk12_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

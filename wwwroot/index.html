@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ace Job Agency - Home</title>
+ <style>
+     * {
+     margin: 0;
+  padding: 0;
+   box-sizing: border-box;
+ }
+
+  body {
+     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+         min-height: 100vh;
+         padding: 20px;
+      }
+
+        .container {
+        max-width: 1200px;
+    margin: 0 auto;
+        background: white;
+  padding: 40px;
+      border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+  .header {
+       text-align: center;
+         margin-bottom: 40px;
+        }
+
+    .header h1 {
+     color: #333;
+ font-size: 42px;
+   margin-bottom: 10px;
+     }
+
+   .header .tagline {
+  color: #667eea;
+   font-size: 18px;
+   font-weight: 500;
+   }
+
+      .welcome-section {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     color: white;
+    padding: 30px;
+  border-radius: 10px;
+ margin-bottom: 40px;
+         text-align: center;
+    }
+
+    .welcome-section h2 {
+      font-size: 28px;
+       margin-bottom: 15px;
+        }
+
+     .welcome-section p {
+       font-size: 16px;
+      line-height: 1.6;
+        }
+
+  .features-grid {
+display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+          margin-bottom: 40px;
+     }
+
+      .feature-card {
+      background: #f8f9fa;
+ padding: 25px;
+          border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+       transition: transform 0.3s, box-shadow 0.3s;
+   cursor: pointer;
+        }
+
+        .feature-card:hover {
+       transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    }
+
+        .feature-card .icon {
+            font-size: 48px;
+ margin-bottom: 15px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+   .feature-card h3 {
+color: #667eea;
+            font-size: 22px;
+         margin-bottom: 10px;
+        }
+
+ .feature-card p {
+  color: #666;
+        font-size: 14px;
+    line-height: 1.6;
+   margin-bottom: 15px;
+        }
+
+        .feature-card .btn {
+      display: inline-block;
+      padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    text-decoration: none;
+   border-radius: 5px;
+       font-weight: 600;
+          transition: opacity 0.3s;
+        }
+
+        .feature-card .btn:hover {
+            opacity: 0.9;
+   }
+
+  .stats-section {
+     background: #f8f9fa;
+  padding: 30px;
+ border-radius: 10px;
+    margin-bottom: 40px;
+  }
+
+        .stats-section h2 {
+ color: #333;
+       text-align: center;
+ margin-bottom: 25px;
+   }
+
+  .stats-grid {
+display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+   gap: 20px;
+ }
+
+    .stat-box {
+    background: white;
+       padding: 20px;
+      border-radius: 8px;
+            text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+     }
+
+        .stat-box .number {
+     font-size: 36px;
+     font-weight: 700;
+       color: #667eea;
+  margin-bottom: 5px;
+  }
+
+  .stat-box .label {
+            color: #666;
+          font-size: 14px;
+  }
+
+     .quick-links {
+background: white;
+    padding: 30px;
+ border-radius: 10px;
+      border: 2px solid #667eea;
+  }
+
+        .quick-links h2 {
+            color: #333;
+margin-bottom: 20px;
+     text-align: center;
+        }
+
+        .links-grid {
+            display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+         gap: 15px;
+      }
+
+        .quick-link {
+       display: flex;
+      align-items: center;
+   padding: 15px;
+  background: #f8f9fa;
+    border-radius: 8px;
+            text-decoration: none;
+          color: #333;
+transition: background 0.3s;
+        }
+
+        .quick-link:hover {
+ background: #e9ecef;
+    }
+
+   .quick-link .link-icon {
+          font-size: 24px;
+   margin-right: 15px;
+       font-weight: bold;
+        color: #667eea;
+  }
+
+        .quick-link .link-text {
+  font-weight: 600;
+      }
+
+        .footer {
+            text-align: center;
+        margin-top: 40px;
+   padding-top: 30px;
+       border-top: 2px solid #e9ecef;
+     color: #666;
+        }
+
+   .logged-in-banner {
+ background: #d4edda;
+border: 1px solid #c3e6cb;
+   color: #155724;
+  padding: 15px;
+     border-radius: 5px;
+ margin-bottom: 20px;
+    text-align: center;
+     font-weight: 600;
+  }
+
+   .logged-out-banner {
+background: #fff3cd;
+ border: 1px solid #ffeeba;
+color: #856404;
+     padding: 15px;
+            border-radius: 5px;
+  margin-bottom: 20px;
+text-align: center;
+  font-weight: 600;
+   }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <div class="header">
+         <h1>&#127970; Ace Job Agency</h1>
+ <p class="tagline">Secure Member Management System</p>
+        </div>
+
+        <div id="statusBanner"></div>
+
+      <div class="welcome-section">
+            <h2>Welcome to Our Secure Platform</h2>
+         <p>A comprehensive web application demonstrating enterprise-level security features including authentication, encryption, session management, and audit logging.</p>
+        </div>
+
+        <!-- Main Features -->
+        <div class="features-grid">
+ <div class="feature-card">
+            <div class="icon">&#9997;</div>
+         <h3>Register</h3>
+    <p>Create a new account with secure password hashing, NRIC encryption, and file upload capabilities.</p>
+    <a href="register.html" class="btn">Get Started &rarr;</a>
+     </div>
+
+    <div class="feature-card">
+    <div class="icon">&#128274;</div>
+  <h3>Login</h3>
+         <p>Secure login with rate limiting, account lockout protection, and session management.</p>
+   <a href="login.html" class="btn">Sign In &rarr;</a>
+        </div>
+
+  <div class="feature-card" id="profileCard" style="display: none;">
+  <div class="icon">&#128100;</div>
+      <h3>My Profile</h3>
+  <p>View and manage your personal information, download files, and update your details.</p>
+  <a href="profile.html" class="btn">View Profile &rarr;</a>
+     </div>
+
+    <div class="feature-card" id="editProfileCard" style="display: none;">
+        <div class="icon">&#9998;</div>
+   <h3>Edit Profile</h3>
+    <p>Update your information, change personal details, and re-upload files.</p>
+     <a href="edit-profile.html" class="btn">Edit Now &rarr;</a>
+ </div>
+
+       <div class="feature-card" id="changePasswordCard" style="display: none;">
+    <div class="icon">&#128273;</div>
+    <h3>Change Password</h3>
+          <p>Securely update your password with history checking and strength validation.</p>
+   <a href="change-password.html" class="btn">Change Password &rarr;</a>
+   </div>
+
+            <div class="feature-card" id="auditLogsCard" style="display: none;">
+      <div class="icon">&#128202;</div>
+      <h3>Audit Logs</h3>
+<p>View your complete activity history and export logs to CSV format.</p>
+    <a href="audit-logs.html" class="btn">View Logs &rarr;</a>
+      </div>
+   </div>
+
+        <!-- Statistics -->
+   <div class="stats-section">
+      <h2>&#127919; Implementation Highlights</h2>
+<div class="stats-grid">
+       <div class="stat-box">
+   <div class="number">40+</div>
+        <div class="label">Security Features</div>
+   </div>
+       <div class="stat-box">
+ <div class="number">10+</div>
+        <div class="label">API Endpoints</div>
+         </div>
+    <div class="stat-box">
+   <div class="number">6</div>
+      <div class="label">User Pages</div>
+     </div>
+      <div class="stat-box">
+   <div class="number">100%</div>
+    <div class="label">OWASP Compliant</div>
+  </div>
+    </div>
+        </div>
+
+ <!-- Quick Links -->
+   <div class="quick-links">
+<h2>&#128640; Quick Access</h2>
+    <div class="links-grid">
+    <a href="register.html" class="quick-link">
+  <span class="link-icon">&#9997;</span>
+ <span class="link-text">New Registration</span>
+    </a>
+  <a href="login.html" class="quick-link">
+   <span class="link-icon">&#128274;</span>
+         <span class="link-text">Member Login</span>
+     </a>
+      <a href="profile.html" class="quick-link" id="profileLink" style="display: none;">
+  <span class="link-icon">&#128100;</span>
+    <span class="link-text">My Profile</span>
+   </a>
+  </div>
+        </div>
+
+    <div class="footer">
+    <p><strong>Ace Job Agency Secure Platform</strong></p>
+    <p>Built with ASP.NET Core 8 | Entity Framework Core | SQL Server</p>
+       <p style="margin-top: 10px; font-size: 12px;">Application Security Project | 2024</p>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+   async function checkLoginStatus() {
+  try {
+       const response = await fetch('https://localhost:7134/api/member/profile', {
+     method: 'GET',
+   credentials: 'include'
+        });
+
+       const statusBanner = document.getElementById('statusBanner');
+           
+       if (response.ok) {
+    const profile = await response.json();
+     statusBanner.innerHTML = `
+      <div class="logged-in-banner">
+      &#10004; Logged in as ${profile.firstName} ${profile.lastName} | 
+            <a href="profile.html" style="color: #155724; text-decoration: underline;">Go to Profile</a> | 
+       <a href="#" onclick="logout(); return false;" style="color: #155724; text-decoration: underline;">Logout</a>
+  </div>
+           `;
+        
+   // Show logged-in features
+      document.getElementById('profileCard').style.display = 'block';
+ document.getElementById('editProfileCard').style.display = 'block';
+        document.getElementById('changePasswordCard').style.display = 'block';
+ document.getElementById('auditLogsCard').style.display = 'block';
+    document.getElementById('profileLink').style.display = 'flex';
+          } else {
+    statusBanner.innerHTML = `
+    <div class="logged-out-banner">
+       &#9432; You are not logged in. Please <a href="login.html" style="color: #856404; text-decoration: underline;">login</a> or 
+        <a href="register.html" style="color: #856404; text-decoration: underline;">register</a> to access all features.
+  </div>
+    `;
+              }
+    } catch (error) {
+ console.error('Error checking login status:', error);
+   }
+        }
+
+     async function logout() {
+   try {
+       const response = await fetch('https://localhost:7134/api/auth/logout', {
+method: 'POST',
+     credentials: 'include'
+  });
+
+     if (response.ok) {
+      window.location.reload();
+   }
+     } catch (error) {
+       console.error('Logout failed:', error);
+ }
+        }
+
+ // Check login status on page load
+   checkLoginStatus();
+    </script>
+</body>
+</html>

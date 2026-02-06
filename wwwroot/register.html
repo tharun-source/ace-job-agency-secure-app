@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ace Job Agency - Member Registration</title>
+    <style>
+        * {
+    margin: 0;
+   padding: 0;
+            box-sizing: border-box;
+        }
+
+  body {
+   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+      padding: 20px;
+   }
+
+      .container {
+       max-width: 600px;
+margin: 0 auto;
+ background: white;
+            padding: 40px;
+            border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+        h1 {
+            text-align: center;
+         color: #333;
+        margin-bottom: 10px;
+        }
+
+     .subtitle {
+ text-align: center;
+            color: #666;
+      margin-bottom: 30px;
+        }
+
+        .form-group {
+         margin-bottom: 20px;
+        }
+
+label {
+            display: block;
+       margin-bottom: 5px;
+            color: #333;
+   font-weight: 500;
+        }
+
+   label .required {
+     color: red;
+        }
+
+        input[type="text"],
+ input[type="email"],
+      input[type="password"],
+        input[type="date"],
+        select,
+  textarea {
+ width: 100%;
+      padding: 12px;
+            border: 1px solid #ddd;
+       border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+ }
+
+        input:focus,
+    select:focus,
+        textarea:focus {
+    outline: none;
+        border-color: #667eea;
+        }
+
+  textarea {
+     resize: vertical;
+         min-height: 100px;
+ }
+
+ .file-input {
+          border: 2px dashed #ddd;
+    padding: 20px;
+    text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+    transition: background-color 0.3s;
+        }
+
+        .file-input:hover {
+          background-color: #f8f9fa;
+      }
+
+        .file-input input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+       color: #667eea;
+          font-weight: 500;
+        }
+
+        button {
+            width: 100%;
+        padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+            border: none;
+          border-radius: 5px;
+            font-size: 16px;
+  font-weight: 600;
+      cursor: pointer;
+       transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+ opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+   .error {
+            color: #dc3545;
+            font-size: 13px;
+    margin-top: 5px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+     .alert-error {
+            background-color: #f8d7da;
+          border: 1px solid #f5c6cb;
+   color: #721c24;
+  padding: 15px;
+       border-radius: 5px;
+   margin-bottom: 20px;
+        }
+
+        .login-link {
+   text-align: center;
+         margin-top: 20px;
+        }
+
+        .login-link a {
+      color: #667eea;
+          text-decoration: none;
+            font-weight: 500;
+        }
+
+        .password-requirements {
+   font-size: 12px;
+          color: #666;
+    margin-top: 5px;
+   padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+    .password-requirements ul {
+        margin-left: 20px;
+            margin-top: 5px;
+  }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <h1>Ace Job Agency</h1>
+        <p class="subtitle">Member Registration</p>
+
+     <div id="successMessage" style="display: none;" class="success"></div>
+        <div id="errorMessage" style="display: none;" class="alert-error"></div>
+
+      <form id="registrationForm" enctype="multipart/form-data">
+            <div class="form-group">
+       <label>First Name <span class="required">*</span></label>
+                <input type="text" id="firstName" name="firstName" required>
+              <div class="error" id="firstNameError"></div>
+            </div>
+
+            <div class="form-group">
+    <label>Last Name <span class="required">*</span></label>
+          <input type="text" id="lastName" name="lastName" required>
+           <div class="error" id="lastNameError"></div>
+      </div>
+
+      <div class="form-group">
+   <label>Gender <span class="required">*</span></label>
+             <select id="gender" name="gender" required>
+            <option value="">Select Gender</option>
+       <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+    <option value="Other">Other</option>
+      </select>
+             <div class="error" id="genderError"></div>
+   </div>
+
+     <div class="form-group">
+  <label>NRIC <span class="required">*</span></label>
+       <input type="text" id="nric" name="nric" placeholder="S1234567A" required>
+                <div class="error" id="nricError"></div>
+     </div>
+
+            <div class="form-group">
+           <label>Email Address <span class="required">*</span></label>
+     <input type="email" id="email" name="email" required>
+            <div class="error" id="emailError"></div>
+        </div>
+
+        <div class="form-group">
+<label>Password <span class="required">*</span></label>
+       <input type="password" id="password" name="password" required>
+       <div class="password-requirements">
+     Password must contain:
+         <ul>
+        <li>At least 12 characters</li>
+       <li>Uppercase and lowercase letters</li>
+         <li>Numbers</li>
+     <li>Special characters (!@#$%^&* etc.)</li>
+               </ul>
+   </div>
+    <div class="error" id="passwordError"></div>
+       </div>
+
+            <div class="form-group">
+      <label>Confirm Password <span class="required">*</span></label>
+   <input type="password" id="confirmPassword" name="confirmPassword" required>
+             <div class="error" id="confirmPasswordError"></div>
+            </div>
+
+            <div class="form-group">
+             <label>Date of Birth <span class="required">*</span></label>
+                <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+                <div class="error" id="dateOfBirthError"></div>
+            </div>
+
+            <div class="form-group">
+  <label>Resume (.pdf or .docx) <span class="required">*</span></label>
+  <div class="file-input" onclick="document.getElementById('resume').click()">
+         <span class="file-label" id="resumeLabel">Click to upload resume</span>
+           <input type="file" id="resume" name="resume" accept=".pdf,.docx" required>
+   </div>
+   <div class="error" id="resumeError"></div>
+      </div>
+
+            <div class="form-group">
+   <label>Photo (Optional)</label>
+        <div class="file-input" onclick="document.getElementById('photo').click()">
+      <span class="file-label" id="photoLabel">Click to upload photo</span>
+             <input type="file" id="photo" name="photo" accept=".jpg,.jpeg,.png,.gif">
+   </div>
+              <div class="error" id="photoError"></div>
+  </div>
+
+     <div class="form-group">
+     <label>Who Am I (Optional)</label>
+     <textarea id="whoAmI" name="whoAmI" placeholder="Tell us about yourself..."></textarea>
+           <div class="error" id="whoAmIError"></div>
+  </div>
+
+        <div class="form-group">
+       <!-- reCAPTCHA temporarily removed for testing -->
+    <div class="error" id="captchaError"></div>
+      </div>
+
+    <button type="submit" id="submitBtn">Register</button>
+      </form>
+
+  <div class="login-link">
+ Already have an account? <a href="login.html">Login here</a>
+ </div>
+    </div>
+
+    <script>
+        // File input handlers
+  document.getElementById('resume').addEventListener('change', function(e) {
+         const fileName = e.target.files[0]?.name || 'Click to upload resume';
+     document.getElementById('resumeLabel').textContent = fileName;
+        });
+
+     document.getElementById('photo').addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name || 'Click to upload photo';
+ document.getElementById('photoLabel').textContent = fileName;
+      });
+
+    // Form submission - NO reCAPTCHA
+  document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+    
+     // Clear previous errors
+         document.querySelectorAll('.error').forEach(el => el.textContent = '');
+ document.getElementById('successMessage').style.display = 'none';
+  document.getElementById('errorMessage').style.display = 'none';
+
+   // Disable submit button
+    const submitBtn = document.getElementById('submitBtn');
+     submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering...';
+
+       try {
+      // Get form data
+       const formData = new FormData();
+   formData.append('firstName', document.getElementById('firstName').value);
+    formData.append('lastName', document.getElementById('lastName').value);
+ formData.append('gender', document.getElementById('gender').value);
+  formData.append('nric', document.getElementById('nric').value);
+     formData.append('email', document.getElementById('email').value);
+   formData.append('password', document.getElementById('password').value);
+  formData.append('confirmPassword', document.getElementById('confirmPassword').value);
+  formData.append('dateOfBirth', document.getElementById('dateOfBirth').value);
+    formData.append('whoAmI', document.getElementById('whoAmI').value);
+   
+ const resumeFile = document.getElementById('resume').files[0];
+          if (resumeFile) {
+    formData.append('resume', resumeFile);
+ }
+
+   const photoFile = document.getElementById('photo').files[0];
+        if (photoFile) {
+   formData.append('photo', photoFile);
+   }
+
+   // Send dummy token since validation is bypassed
+  formData.append('captchaToken', 'bypass-token-for-testing');
+
+  console.log('Sending registration request...');
+  const response = await fetch('https://localhost:7134/api/auth/register', {
+   method: 'POST',
+  body: formData
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    
+    // Try to get the response as text first
+    const responseText = await response.text();
+    console.log('Response text:', responseText);
+    
+    // Try to parse as JSON
+    let result;
+    try {
+        result = JSON.parse(responseText);
+ } catch (e) {
+        console.error('Failed to parse response as JSON:', e);
+  result = { message: responseText || 'Unknown error occurred' };
+    }
+ 
+    console.log('Parsed result:', result);
+
+ if (response.ok) {
+  document.getElementById('successMessage').textContent = result.message;
+document.getElementById('successMessage').style.display = 'block';
+       document.getElementById('registrationForm').reset();
+  
+        // Redirect to login after 2 seconds
+  setTimeout(() => {
+     window.location.href = 'login.html';
+      }, 2000);
+       } else {
+            const errorMsg = result.details 
+           ? `${result.message}\n\nDetails: ${result.details}\n\nInner: ${result.innerDetails || 'N/A'}`
+     : result.message || 'Registration failed';
+  document.getElementById('errorMessage').textContent = errorMsg;
+  document.getElementById('errorMessage').style.display = 'block';
+ }
+ } catch (error) {
+ console.error('Registration error:', error);
+ console.error('Error stack:', error.stack);
+document.getElementById('errorMessage').textContent = 'An error occurred. Check console for details: ' + error.message;
+  document.getElementById('errorMessage').style.display = 'block';
+     } finally {
+submitBtn.disabled = false;
+     submitBtn.textContent = 'Register';
+ }
+    });
+  </script>
+</body>
+</html>
