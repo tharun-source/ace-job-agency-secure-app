@@ -1,0 +1,4 @@
+[33mb7c41dd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m Add GitHub push instructions
+[33mba265d7[m Add security policy and GitHub Actions workflow folder
+[33mc2b8b85[m Complete secure web application with all features implemented
+[33m30a24f2[m Initial commit: Secure Web Application with ASP.NET Core 8 - Features: Authentication, Encryption, Audit Logging, OWASP Top 10 Compliance

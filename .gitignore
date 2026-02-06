@@ -78,19 +78,13 @@ artifacts/
 # Uploaded files
 wwwroot/uploads/**
 !wwwroot/uploads/.gitkeep
-!wwwroot/uploads/resumes/.gitkeep
-!wwwroot/uploads/photos/.gitkeep
 
-# IMPORTANT: Secrets and sensitive configuration files
-appsettings.json
-appsettings.Development.json
-appsettings.Production.json
-appsettings.*.json
+# Secrets and keys (IMPORTANT!)
+**/appsettings.Development.json
+**/appsettings.Production.json
 **/*.config
 **/*.pfx
 **/*.p12
-**/*.key
-**/*.pem
 
 # NuGet
 *.nupkg
