@@ -14,13 +14,14 @@ namespace Application_Security_Asgnt_wk12.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly PasswordService _passwordService;
-  private readonly EncryptionService _encryptionService;
+        private readonly EncryptionService _encryptionService;
         private readonly SessionService _sessionService;
         private readonly AuditService _auditService;
- private readonly FileUploadService _fileUploadService;
-     private readonly CaptchaService _captchaService;
+        private readonly FileUploadService _fileUploadService;
+        private readonly CaptchaService _captchaService;
         private readonly EmailService _emailService;
- private readonly ILogger<AuthController> _logger;
+        private readonly ILogger<AuthController> _logger;
+        private readonly TwoFactorService _twoFactorService;
 
         public AuthController(
        ApplicationDbContext context,
@@ -31,7 +32,8 @@ namespace Application_Security_Asgnt_wk12.Controllers
           FileUploadService fileUploadService,
   CaptchaService captchaService,
    EmailService emailService,
-      ILogger<AuthController> logger)
+      ILogger<AuthController> logger,
+    TwoFactorService twoFactorService)
         {
  _context = context;
  _passwordService = passwordService;
@@ -42,6 +44,7 @@ namespace Application_Security_Asgnt_wk12.Controllers
    _captchaService = captchaService;
             _emailService = emailService;
       _logger = logger;
+      _twoFactorService = twoFactorService;
   }
 
    // Test endpoint to verify everything is working
@@ -217,31 +220,32 @@ if (resumeUpload.FilePath != null)
       public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            var userAgent = Request.Headers["User-Agent"].ToString();
+  var userAgent = Request.Headers["User-Agent"].ToString();
 
   try
-            {
-           // Validate CAPTCHA
+    {
+         // Validate CAPTCHA
     var isCaptchaValid = await _captchaService.ValidateCaptchaAsync(dto.CaptchaToken);
-                if (!isCaptchaValid)
+      if (!isCaptchaValid)
           {
     await _auditService.LogActionAsync("0", "LOGIN_FAILED_CAPTCHA", ipAddress, userAgent);
           return BadRequest(new { message = "Invalid CAPTCHA. Please try again." });
      }
 
-                // Sanitize email
+ // Sanitize email
       var email = SanitizeInput(dto.Email.ToLower());
 
   // Find member
-             var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == email);
-    if (member == null)
-        {
-        await _auditService.LogActionAsync("0", "LOGIN_FAILED_INVALID_EMAIL", ipAddress, userAgent, email);
-           return Unauthorized(new { message = "Invalid email or password." });
+       var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == email);
+ if (member == null)
+   {
+     // Security Fix: Don't log email in failed login attempts
+        await _auditService.LogActionAsync("0", "LOGIN_FAILED_INVALID_EMAIL", ipAddress, userAgent);
+        return Unauthorized(new { message = "Invalid email or password." });
     }
 
-     // Check if account is locked
-        if (member.LockedOutUntil.HasValue && member.LockedOutUntil.Value > DateTime.UtcNow)
+// Check if account is locked
+    if (member.LockedOutUntil.HasValue && member.LockedOutUntil.Value > DateTime.UtcNow)
        {
 var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).TotalMinutes;
            await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_FAILED_ACCOUNT_LOCKED", ipAddress, userAgent);
@@ -250,13 +254,13 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
 
       // Verify password
    if (!_passwordService.VerifyPassword(dto.Password, member.PasswordHash))
-         {
+    {
   member.FailedLoginAttempts++;
  
-        // Lock account after 3 failed attempts
+ // Lock account after 3 failed attempts
      if (member.FailedLoginAttempts >= 3)
      {
-          member.LockedOutUntil = DateTime.UtcNow.AddMinutes(15);
+    member.LockedOutUntil = DateTime.UtcNow.AddMinutes(15);
    await _context.SaveChangesAsync();
          await _auditService.LogActionAsync(member.Id.ToString(), "ACCOUNT_LOCKED", ipAddress, userAgent);
        return Unauthorized(new { message = "Account locked due to multiple failed login attempts. Please try again after 15 minutes." });
@@ -270,22 +274,49 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
      // Check password age (must change password after 90 days)
         if (member.LastPasswordChangedDate.HasValue)
   {
-              var daysSincePasswordChange = (DateTime.UtcNow - member.LastPasswordChangedDate.Value).TotalDays;
+      var daysSincePasswordChange = (DateTime.UtcNow - member.LastPasswordChangedDate.Value).TotalDays;
     if (daysSincePasswordChange > 90)
       {
  await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_REQUIRE_PASSWORD_CHANGE", ipAddress, userAgent);
      return Unauthorized(new { message = "Your password has expired. Please reset your password.", requirePasswordChange = true });
        }
-            }
+     }
+
+   // Check if 2FA is enabled
+    if (member.IsTwoFactorEnabled)
+  {
+   // Generate and send OTP
+   var otpSent = await _twoFactorService.SendOtpAsync(member.Email, $"{member.FirstName} {member.LastName}");
+       
+      if (!otpSent)
+    {
+     await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_2FA_OTP_SEND_FAILED", ipAddress, userAgent);
+        return StatusCode(500, new { message = "Failed to send OTP. Please try again." });
+ }
+        
+  // Reset failed login attempts (password was correct)
+         member.FailedLoginAttempts = 0;
+       member.LockedOutUntil = null;
+     await _context.SaveChangesAsync();
+    
+       await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_2FA_OTP_SENT", ipAddress, userAgent);
+       
+    return Ok(new
+  {
+     message = "OTP sent to your email. Please verify to complete login.",
+ requireOtp = true,
+         email = member.Email
+        });
+  }
 
      // Reset failed login attempts
         member.FailedLoginAttempts = 0;
-     member.LockedOutUntil = null;
+      member.LockedOutUntil = null;
        member.LastLoginDate = DateTime.UtcNow;
      await _context.SaveChangesAsync();
 
    // Create session
-       var session = await _sessionService.CreateSessionAsync(member.Id, ipAddress, userAgent);
+var session = await _sessionService.CreateSessionAsync(member.Id, ipAddress, userAgent);
        
         // Store session in HTTP session
  HttpContext.Session.SetString("SessionId", session.SessionId);
@@ -294,10 +325,10 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
 
          await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_SUCCESS", ipAddress, userAgent);
 
-           return Ok(new 
+         return Ok(new 
       { 
      message = "Login successful!",
-        sessionId = session.SessionId,
+sessionId = session.SessionId,
     member = new
          {
       id = member.Id,
@@ -309,9 +340,9 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
      }
    catch (Exception ex)
             {
-     _logger.LogError(ex, "Error during login");
+   _logger.LogError(ex, "Error during login");
      await _auditService.LogActionAsync("0", "LOGIN_ERROR", ipAddress, userAgent, ex.Message);
-                return StatusCode(500, new { message = "An error occurred during login." });
+          return StatusCode(500, new { message = "An error occurred during login." });
      }
         }
 
@@ -335,48 +366,49 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
-        {
+   {
     var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
  var userAgent = Request.Headers["User-Agent"].ToString();
 
-     try
+  try
   {
   // Sanitize email
     var email = SanitizeInput(dto.Email.ToLower());
 
-                // Find member
+     // Find member
      var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == email);
-                
-            // For security, always return success even if email doesn't exist
-     // This prevents email enumeration attacks
+    
+         // For security, always return success even if email doesn't exist
+ // This prevents email enumeration attacks
  if (member == null)
        {
-       await _auditService.LogActionAsync("0", "FORGOT_PASSWORD_INVALID_EMAIL", ipAddress, userAgent, email);
+  // Security Fix: Don't log email address
+       await _auditService.LogActionAsync("0", "FORGOT_PASSWORD_INVALID_EMAIL", ipAddress, userAgent, "[redacted]");
         await Task.Delay(1000); // Simulate processing time
-     return Ok(new { message = "If that email exists, a password reset link has been sent." });
+   return Ok(new { message = "If that email exists, a password reset link has been sent." });
          }
 
   // Generate reset token
        var resetToken = _passwordService.GeneratePasswordResetToken();
-          var tokenExpiry = _passwordService.GetResetTokenExpiry();
+     var tokenExpiry = _passwordService.GetResetTokenExpiry();
 
 // Save token to database
-                member.PasswordResetToken = resetToken;
-                member.PasswordResetTokenExpiry = tokenExpiry;
+     member.PasswordResetToken = resetToken;
+      member.PasswordResetTokenExpiry = tokenExpiry;
         await _context.SaveChangesAsync();
 
               // Generate reset link
       var resetLink = $"{Request.Scheme}://{Request.Host}/reset-password.html?token={resetToken}&email={Uri.EscapeDataString(email)}";
 
      // Send email
-                var emailSent = await _emailService.SendPasswordResetEmailAsync(
+         var emailSent = await _emailService.SendPasswordResetEmailAsync(
         email,
          resetLink,
-      $"{member.FirstName} {member.LastName}"
+    $"{member.FirstName} {member.LastName}"
         );
 
      if (emailSent)
-                {
+{
         await _auditService.LogActionAsync(member.Id.ToString(), "FORGOT_PASSWORD_SUCCESS", ipAddress, userAgent);
      }
    else
@@ -386,37 +418,101 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
 
      return Ok(new { message = "If that email exists, a password reset link has been sent." });
     }
-        catch (Exception ex)
+   catch (Exception ex)
             {
      _logger.LogError(ex, "Error during forgot password");
-            await _auditService.LogActionAsync("0", "FORGOT_PASSWORD_ERROR", ipAddress, userAgent, ex.Message);
-            return StatusCode(500, new { message = "An error occurred. Please try again later." });
-            }
+    await _auditService.LogActionAsync("0", "FORGOT_PASSWORD_ERROR", ipAddress, userAgent, ex.Message);
+ return StatusCode(500, new { message = "An error occurred. Please try again later." });
+      }
      }
+
+ [HttpPost("verify-otp")]
+  public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+     {
+         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+  var userAgent = Request.Headers["User-Agent"].ToString();
+
+  try
+       {
+   // Sanitize email
+ var email = SanitizeInput(dto.Email.ToLower());
+
+      // Find member
+  var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == email);
+    if (member == null)
+     {
+    // Security Fix: Don't log email in failed OTP attempts
+  await _auditService.LogActionAsync("0", "VERIFY_OTP_INVALID_EMAIL", ipAddress, userAgent);
+ return Unauthorized(new { message = "Invalid verification code." });
+    }
+
+    // Validate OTP
+  var isValid = await _twoFactorService.ValidateOtpAsync(email, dto.Otp);
+ if (!isValid)
+        {
+    await _auditService.LogActionAsync(member.Id.ToString(), "VERIFY_OTP_FAILED", ipAddress, userAgent);
+  return Unauthorized(new { message = "Invalid or expired verification code." });
+       }
+
+     // Update last login
+             member.LastLoginDate = DateTime.UtcNow;
+         await _context.SaveChangesAsync();
+
+    // Create session
+    var session = await _sessionService.CreateSessionAsync(member.Id, ipAddress, userAgent);
+       
+  // Store session in HTTP session
+ HttpContext.Session.SetString("SessionId", session.SessionId);
+       HttpContext.Session.SetInt32("MemberId", member.Id);
+  HttpContext.Session.SetString("Email", member.Email);
+
+         await _auditService.LogActionAsync(member.Id.ToString(), "VERIFY_OTP_SUCCESS_LOGIN_COMPLETE", ipAddress, userAgent);
+
+     return Ok(new 
+   { 
+     message = "Login successful!",
+        sessionId = session.SessionId,
+    member = new
+         {
+      id = member.Id,
+    firstName = member.FirstName,
+      lastName = member.LastName,
+  email = member.Email
+               }
+     });
+            }
+ catch (Exception ex)
+   {
+     _logger.LogError(ex, "Error during OTP verification");
+           await _auditService.LogActionAsync("0", "VERIFY_OTP_ERROR", ipAddress, userAgent, ex.Message);
+ return StatusCode(500, new { message = "An error occurred during verification." });
+   }
+  }
 
      [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
    {
-            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            var userAgent = Request.Headers["User-Agent"].ToString();
+       var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    var userAgent = Request.Headers["User-Agent"].ToString();
 
-            try
+     try
 {
-      // Sanitize inputs
-            var email = SanitizeInput(dto.Email.ToLower());
-            var token = dto.Token?.Trim();
+    // Sanitize inputs
+         var email = SanitizeInput(dto.Email.ToLower());
+    var token = dto.Token?.Trim();
 
   if (string.IsNullOrEmpty(token))
-                {
+   {
       return BadRequest(new { message = "Invalid reset token." });
       }
 
-      // Find member
+   // Find member
     var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == email);
-            if (member == null)
+     if (member == null)
        {
-            await _auditService.LogActionAsync("0", "RESET_PASSWORD_INVALID_EMAIL", ipAddress, userAgent, email);
-          return BadRequest(new { message = "Invalid reset token or email." });
+       // Security Fix: Don't log email in failed reset attempts
+      await _auditService.LogActionAsync("0", "RESET_PASSWORD_INVALID_EMAIL", ipAddress, userAgent);
+return BadRequest(new { message = "Invalid reset token or email." });
   }
 
     // Validate token
@@ -424,14 +520,14 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
 {
       await _auditService.LogActionAsync(member.Id.ToString(), "RESET_PASSWORD_INVALID_TOKEN", ipAddress, userAgent);
      return BadRequest(new { message = "Invalid reset token." });
-             }
+       }
 
           // Check token expiry
      if (!_passwordService.IsResetTokenValid(member.PasswordResetTokenExpiry))
-        {
+     {
         await _auditService.LogActionAsync(member.Id.ToString(), "RESET_PASSWORD_TOKEN_EXPIRED", ipAddress, userAgent);
    return BadRequest(new { message = "Reset token has expired. Please request a new one." });
-             }
+     }
 
  // Validate password strength
  if (!_passwordService.ValidatePasswordStrength(dto.NewPassword, out string passwordError))
@@ -442,23 +538,23 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
      // Hash new password
     var newPasswordHash = _passwordService.HashPassword(dto.NewPassword);
 
-                // Check password history
-       if (!_passwordService.CheckPasswordHistory(newPasswordHash, member.PasswordHistory))
-        {
-            return BadRequest(new { message = "You cannot reuse any of your last 2 passwords." });
-          }
+    // Check password history
+   if (!_passwordService.CheckPasswordHistory(newPasswordHash, member.PasswordHistory))
+   {
+   return BadRequest(new { message = "You cannot reuse any of your last 2 passwords." });
+    }
 
-                // Update password and history
-                member.PasswordHistory = _passwordService.AddToPasswordHistory(member.PasswordHash, member.PasswordHistory);
+   // Update password and history
+     member.PasswordHistory = _passwordService.AddToPasswordHistory(member.PasswordHash, member.PasswordHistory);
 member.PasswordHash = newPasswordHash;
          member.LastPasswordChangedDate = DateTime.UtcNow;
-         
+       
          // Clear reset token
           member.PasswordResetToken = null;
-                member.PasswordResetTokenExpiry = null;
+        member.PasswordResetTokenExpiry = null;
     
           // Reset failed login attempts
-    member.FailedLoginAttempts = 0;
+ member.FailedLoginAttempts = 0;
        member.LockedOutUntil = null;
 
       await _context.SaveChangesAsync();
@@ -466,7 +562,7 @@ member.PasswordHash = newPasswordHash;
 
         return Ok(new { message = "Password has been reset successfully. You can now login with your new password." });
     }
-            catch (Exception ex)
+        catch (Exception ex)
             {
      _logger.LogError(ex, "Error during password reset");
     await _auditService.LogActionAsync("0", "RESET_PASSWORD_ERROR", ipAddress, userAgent, ex.Message);

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - Ace Job Agency</title>
+    <style>
+        * {
+       margin: 0;
+ padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+     display: flex;
+    justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+  .container {
+      background: white;
+          padding: 40px;
+       border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 450px;
+ width: 100%;
+        }
+
+        h1 {
+          color: #333;
+    margin-bottom: 10px;
+ text-align: center;
+        }
+
+     .subtitle {
+            color: #666;
+            text-align: center;
+margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .email-display {
+  background: #f8f9fa;
+       padding: 15px;
+ border-radius: 5px;
+    margin-bottom: 20px;
+   text-align: center;
+            color: #667eea;
+     font-weight: bold;
+     }
+
+        .form-group {
+       margin-bottom: 20px;
+        }
+
+        label {
+display: block;
+    margin-bottom: 5px;
+     color: #333;
+            font-weight: 500;
+    }
+
+        input {
+            width: 100%;
+    padding: 12px;
+     border: 2px solid #ddd;
+            border-radius: 5px;
+      font-size: 16px;
+       transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+ border-color: #667eea;
+        }
+
+        .otp-input {
+            text-align: center;
+  font-size: 24px;
+            letter-spacing: 10px;
+          font-weight: bold;
+        }
+
+        button {
+       width: 100%;
+      padding: 15px;
+       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+        border: none;
+            border-radius: 5px;
+      font-size: 16px;
+ cursor: pointer;
+       transition: transform 0.2s;
+   }
+
+        button:hover {
+   transform: translateY(-2px);
+}
+
+        button:disabled {
+        background: #ccc;
+   cursor: not-allowed;
+         transform: none;
+  }
+
+    .message {
+      padding: 12px;
+      border-radius: 5px;
+          margin-bottom: 20px;
+            display: none;
+        }
+
+     .error {
+         background-color: #f8d7da;
+         color: #721c24;
+  border: 1px solid #f5c6cb;
+        }
+
+        .success {
+ background-color: #d4edda;
+            color: #155724;
+    border: 1px solid #c3e6cb;
+        }
+
+        .info {
+       background-color: #d1ecf1;
+    color: #0c5460;
+            border: 1px solid #bee5eb;
+ }
+
+        .resend-link {
+        text-align: center;
+margin-top: 20px;
+      color: #666;
+       font-size: 14px;
+        }
+
+        .resend-link a {
+            color: #667eea;
+text-decoration: none;
+       font-weight: 500;
+        }
+
+        .resend-link a:hover {
+      text-decoration: underline;
+        }
+
+     .timer {
+            text-align: center;
+ margin-top: 15px;
+         color: #666;
+  font-size: 14px;
+        }
+
+     .timer.expired {
+         color: #dc3545;
+     font-weight: bold;
+      }
+
+        .back-link {
+            text-align: center;
+margin-top: 15px;
+        }
+
+    .back-link a {
+    color: #667eea;
+        text-decoration: none;
+     }
+
+        .back-link a:hover {
+ text-decoration: underline;
+        }
+
+        .security-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+       color: #856404;
+            padding: 15px;
+      border-radius: 5px;
+    margin-top: 20px;
+            font-size: 13px;
+        }
+
+        .security-notice strong {
+    display: block;
+margin-bottom: 5px;
+   }
+
+        @media (max-width: 480px) {
+ .container {
+       padding: 20px;
+            }
+
+      h1 {
+     font-size: 24px;
+          }
+
+        .otp-input {
+             font-size: 20px;
+ letter-spacing: 5px;
+    }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>?? Verify Your Identity</h1>
+        <p class="subtitle">Enter the 6-digit code sent to your email</p>
+
+        <div class="email-display" id="emailDisplay"></div>
+
+        <div id="message" class="message"></div>
+
+        <form id="otpForm">
+            <div class="form-group">
+                <label for="otp">Verification Code</label>
+     <input type="text" id="otp" name="otp" class="otp-input" 
+    pattern="[0-9]{6}" maxlength="6" 
+            placeholder="000000" required
+      autocomplete="off">
+     </div>
+
+            <button type="submit" id="verifyBtn">Verify & Login</button>
+        </form>
+
+        <div class="timer" id="timer">Code expires in <span id="countdown">5:00</span></div>
+
+        <div class="resend-link">
+        Didn't receive the code? 
+          <a href="#" id="resendLink">Resend OTP</a>
+        </div>
+
+        <div class="back-link">
+     <a href="login.html">? Back to Login</a>
+        </div>
+
+ <div class="security-notice">
+        <strong>??? Security Tips:</strong>
+          • Never share this code with anyone<br>
+      • This code expires in 5 minutes<br>
+       • If you didn't request this, secure your account immediately
+        </div>
+    </div>
+
+    <script>
+        // Get email from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+
+   if (!email) {
+         window.location.href = 'login.html';
+   }
+
+      // Display email (masked)
+        function maskEmail(email) {
+            const [username, domain] = email.split('@');
+   const maskedUsername = username[0] + '*'.repeat(username.length - 2) + username[username.length - 1];
+    return maskedUsername + '@' + domain;
+  }
+
+        document.getElementById('emailDisplay').textContent = maskEmail(email);
+
+        // Countdown timer
+      let timeLeft = 300; // 5 minutes in seconds
+  const countdownElement = document.getElementById('countdown');
+        const timerElement = document.getElementById('timer');
+
+        const timer = setInterval(() => {
+        timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+       const seconds = timeLeft % 60;
+          countdownElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+   if (timeLeft <= 0) {
+                clearInterval(timer);
+         timerElement.classList.add('expired');
+        timerElement.innerHTML = '<strong>?? Code expired! Please request a new one.</strong>';
+   document.getElementById('verifyBtn').disabled = true;
+    } else if (timeLeft <= 60) {
+     timerElement.style.color = '#dc3545';
+  }
+        }, 1000);
+
+        // Auto-focus OTP input
+        document.getElementById('otp').focus();
+
+        // Only allow numbers
+        document.getElementById('otp').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Handle OTP form submission
+        document.getElementById('otpForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+          const otp = document.getElementById('otp').value;
+   const messageDiv = document.getElementById('message');
+       const verifyBtn = document.getElementById('verifyBtn');
+
+            if (otp.length !== 6) {
+                showMessage('Please enter a 6-digit code', 'error');
+                return;
+ }
+
+      verifyBtn.disabled = true;
+         verifyBtn.textContent = 'Verifying...';
+
+  try {
+        const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+   headers: {
+     'Content-Type': 'application/json'
+          },
+       body: JSON.stringify({
+       email: email,
+    otp: otp
+          })
+    });
+
+    const data = await response.json();
+
+           if (response.ok) {
+        showMessage('? ' + data.message, 'success');
+     clearInterval(timer);
+   setTimeout(() => {
+      window.location.href = 'index.html';
+  }, 1000);
+    } else {
+                 showMessage('? ' + data.message, 'error');
+        verifyBtn.disabled = false;
+       verifyBtn.textContent = 'Verify & Login';
+           document.getElementById('otp').value = '';
+      document.getElementById('otp').focus();
+                }
+            } catch (error) {
+  showMessage('? An error occurred. Please try again.', 'error');
+                verifyBtn.disabled = false;
+      verifyBtn.textContent = 'Verify & Login';
+            }
+     });
+
+        // Resend OTP
+        document.getElementById('resendLink').addEventListener('click', async function(e) {
+       e.preventDefault();
+            
+       const messageDiv = document.getElementById('message');
+            this.style.pointerEvents = 'none';
+    this.textContent = 'Sending...';
+
+  try {
+   // Note: You would need to implement a resend endpoint or re-login
+   showMessage('?? Please return to login page to request a new code.', 'info');
+setTimeout(() => {
+      window.location.href = 'login.html';
+         }, 2000);
+      } catch (error) {
+      showMessage('? Failed to resend code', 'error');
+      this.style.pointerEvents = 'auto';
+          this.textContent = 'Resend OTP';
+}
+        });
+
+        function showMessage(message, type) {
+       const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = 'message ' + type;
+       messageDiv.style.display = 'block';
+        }
+  </script>
+</body>
+</html>

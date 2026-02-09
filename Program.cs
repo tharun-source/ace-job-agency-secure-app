@@ -42,6 +42,7 @@ builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<FileUploadService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<TwoFactorService>();
 builder.Services.AddHttpClient<CaptchaService>();
 
 // Configure Antiforgery

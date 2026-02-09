@@ -8,7 +8,7 @@ namespace Application_Security_Asgnt_wk12.Services
     public class SessionService
     {
      private readonly ApplicationDbContext _context;
-  private const int SessionTimeoutMinutes = 30;
+  private const int SessionTimeoutMinutes = 30;  // Changed from 1 to 30 minutes
 
      public SessionService(ApplicationDbContext context)
  {

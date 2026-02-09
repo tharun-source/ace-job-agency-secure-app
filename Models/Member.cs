@@ -48,5 +48,11 @@ namespace Application_Security_Asgnt_wk12.Models
         public string? PasswordResetToken { get; set; }
         
         public DateTime? PasswordResetTokenExpiry { get; set; }
+
+        // Two-Factor Authentication Fields
+        public bool IsTwoFactorEnabled { get; set; } = false;
+        public string? CurrentOtp { get; set; }
+        public DateTime? OtpExpiry { get; set; }
+        public string? BackupCodes { get; set; } // Encrypted, comma-separated
     }
 }
