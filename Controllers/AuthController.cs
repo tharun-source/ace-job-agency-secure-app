@@ -85,10 +85,11 @@ var canConnect = await _context.Database.CanConnectAsync();
        try
     {
       _logger.LogInformation("=== Registration attempt started ===");
-  _logger.LogInformation($"Email: {dto.Email}, FirstName: {dto.FirstName}, LastName: {dto.LastName}");
+  // Security Fix: Don't log user input (email, names)
+  _logger.LogInformation("New registration attempt received");
 
     // Validate CAPTCHA
-          var isCaptchaValid = await _captchaService.ValidateCaptchaAsync(dto.CaptchaToken);
+     var isCaptchaValid = await _captchaService.ValidateCaptchaAsync(dto.CaptchaToken);
       if (!isCaptchaValid)
   {
         await _auditService.LogActionAsync("0", "REGISTER_FAILED_CAPTCHA", ipAddress, userAgent);

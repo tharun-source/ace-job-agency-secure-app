@@ -21,15 +21,14 @@ namespace Application_Security_Asgnt_wk12.Services
        // For development/testing, just log the reset link
    if (_configuration.GetValue<bool>("Email:UseConsoleLog"))
   {
-   // Security Fix: Redact sensitive information in logs
-  var redactedEmail = RedactEmail(toEmail);
-     _logger.LogInformation("Password reset requested for user: {RedactedEmail}", redactedEmail);
+   // Security Fix: Don't log any form of email address
+ _logger.LogInformation("Password reset email requested");
       Console.WriteLine($"\n========== PASSWORD RESET EMAIL ==========");
    // Security Fix: Don't output email to console
      Console.WriteLine($"Subject: Password Reset Request");
            Console.WriteLine($"Reset Link: {resetLink}");
-   Console.WriteLine($"Link expires in 15 minutes");
-            Console.WriteLine($"==========================================\n");
+Console.WriteLine($"Link expires in 15 minutes");
+    Console.WriteLine($"==========================================\n");
    return true;
     }
 
@@ -74,14 +73,13 @@ var fromName = _configuration["Email:FromName"];
         {
          // For development/testing, just log the OTP
     if (_configuration.GetValue<bool>("Email:UseConsoleLog"))
-       {
-    // Security Fix: Redact sensitive information in logs
-      var redactedEmail = RedactEmail(toEmail);
-   _logger.LogInformation("2FA OTP sent for user: {RedactedEmail}", redactedEmail);
+  {
+    // Security Fix: Don't log any form of email address
+ _logger.LogInformation("2FA OTP email sent");
     Console.WriteLine($"\n========== 2FA OTP CODE ==========");
    // Security Fix: Don't output email to console
              Console.WriteLine($"User: {userName}");
-          Console.WriteLine($"OTP Code: {otp}");
+    Console.WriteLine($"OTP Code: {otp}");
      Console.WriteLine($"Expires in: 5 minutes");
      Console.WriteLine($"===================================\n");
  return true;
@@ -218,7 +216,7 @@ return $"{redactedLocal}@{redactedDomain}";
      .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 5px 5px; }}
        .button {{ display: inline-block; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
         .footer {{ text-align: center; margin-top: 20px; font-size: 12px; color: #666; }}
-  .warning {{ background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+  .warning {{ background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px, 10px; border-radius: 5px; margin: 20px 0; }}
          </style>
     </head>
   <body>
