@@ -84,9 +84,6 @@ app.UseDefaultFiles(defaultFilesOptions);
 
 app.UseStaticFiles();
 
-// Configure 404 status code pages
-app.UseStatusCodePagesWithReExecute("/404.html");
-
 app.UseRouting();
 
 app.UseCors("AllowSpecificOrigin");
@@ -96,12 +93,19 @@ app.UseMiddleware<SessionValidationMiddleware>();
 
 app.UseAuthorization();
 
+// Configure 404 status code pages - BEFORE MapControllers
+app.UseStatusCodePagesWithReExecute("/404.html");
+
 app.MapControllers();
 
 // Redirect root to index page
 app.MapGet("/", () => Results.Redirect("/index.html"));
 
-// Fallback for any unmatched routes
-app.MapFallback(() => Results.Redirect("/404.html"));
+// Fallback for any unmatched routes - catches everything not handled above
+app.MapFallback(async context =>
+{
+    context.Response.StatusCode = 404;
+    context.Response.Redirect("/404.html");
+});
 
 app.Run();
