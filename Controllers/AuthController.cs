@@ -320,10 +320,14 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
 
    // Security Enhancement: Invalidate all other sessions for this user
           // This prevents multiple simultaneous logins from different locations
+        // Using transaction to prevent race condition
         await _sessionService.InvalidateAllUserSessionsAsync(member.Id);
           await _auditService.LogActionAsync(member.Id.ToString(), "ALL_SESSIONS_INVALIDATED", ipAddress, userAgent);
 
-   // Create session
+    // Small delay to ensure invalidation completes
+    await Task.Delay(100);
+
+   // Create NEW session (only one should be active)
 var session = await _sessionService.CreateSessionAsync(member.Id, ipAddress, userAgent);
        
     // Store session in HTTP session

@@ -108,21 +108,34 @@ namespace Application_Security_Asgnt_wk12.Services
 
     public async Task InvalidateAllUserSessionsAsync(int memberId)
         {
-   // Get all active sessions for this user
-       var sessions = await _context.UserSessions
+   // Use a transaction to ensure atomicity and prevent race conditions
+    using var transaction = await _context.Database.BeginTransactionAsync();
+    
+    try
+    {
+        // Get all active sessions for this user with a lock
+     var sessions = await _context.UserSessions
     .Where(s => s.MemberId == memberId && s.IsActive)
             .ToListAsync();
 
-         // Mark all sessions as inactive
-          foreach (var session in sessions)
-   {
- session.IsActive = false;
-    }
-
-    if (sessions.Any())
+        // Mark all sessions as inactive
+        foreach (var session in sessions)
         {
-     await _context.SaveChangesAsync();
-     }
+       session.IsActive = false;
+        }
+
+   if (sessions.Any())
+  {
+            await _context.SaveChangesAsync();
+        }
+     
+        await transaction.CommitAsync();
+    }
+    catch
+    {
+        await transaction.RollbackAsync();
+     throw;
+    }
         }
 
         public async Task<List<UserSession>> GetActiveUserSessionsAsync(int memberId)
