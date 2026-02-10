@@ -2,38 +2,47 @@ using Application_Security_Asgnt_wk12.Data;
 using Application_Security_Asgnt_wk12.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using System.Collections.Concurrent;
 
 namespace Application_Security_Asgnt_wk12.Services
 {
     public class SessionService
     {
     private readonly ApplicationDbContext _context;
-        private const int SessionTimeoutMinutes = 30;  // Changed from 1 to 30 minutes
+   private const int SessionTimeoutMinutes = 30;
+    
+        // Static dictionary to hold locks per user (prevents concurrent logins for same user)
+     private static readonly ConcurrentDictionary<int, SemaphoreSlim> _userLocks = new();
 
-  public SessionService(ApplicationDbContext context)
-    {
- _context = context;
-     }
-
-    public async Task<UserSession> CreateSessionAsync(int memberId, string ipAddress, string userAgent)
+        public SessionService(ApplicationDbContext context)
         {
-            var sessionId = GenerateSecureSessionId();
-         var session = new UserSession
-            {
+            _context = context;
+        }
+
+        private SemaphoreSlim GetUserLock(int memberId)
+        {
+   return _userLocks.GetOrAdd(memberId, _ => new SemaphoreSlim(1, 1));
+        }
+
+        public async Task<UserSession> CreateSessionAsync(int memberId, string ipAddress, string userAgent)
+        {
+        var sessionId = GenerateSecureSessionId();
+     var session = new UserSession
+ {
      MemberId = memberId,
-   SessionId = sessionId,
-                CreatedAt = DateTime.UtcNow,
-      ExpiresAt = DateTime.UtcNow.AddMinutes(SessionTimeoutMinutes),
-          IpAddress = ipAddress,
-       UserAgent = userAgent,
-         IsActive = true
-  };
+    SessionId = sessionId,
+             CreatedAt = DateTime.UtcNow,
+         ExpiresAt = DateTime.UtcNow.AddMinutes(SessionTimeoutMinutes),
+    IpAddress = ipAddress,
+                UserAgent = userAgent,
+    IsActive = true
+            };
 
-   _context.UserSessions.Add(session);
- await _context.SaveChangesAsync();
+     _context.UserSessions.Add(session);
+            await _context.SaveChangesAsync();
 
-            return session;
-   }
+     return session;
+        }
 
         public async Task<UserSession?> GetActiveSessionAsync(string sessionId)
         {
@@ -108,35 +117,47 @@ namespace Application_Security_Asgnt_wk12.Services
 
     public async Task InvalidateAllUserSessionsAsync(int memberId)
         {
-   // Use a transaction to ensure atomicity and prevent race conditions
-    using var transaction = await _context.Database.BeginTransactionAsync();
+   // Get user-specific lock to prevent race conditions during concurrent logins
+var userLock = GetUserLock(memberId);
+    await userLock.WaitAsync();
     
     try
-    {
-        // Get all active sessions for this user with a lock
-     var sessions = await _context.UserSessions
-    .Where(s => s.MemberId == memberId && s.IsActive)
-            .ToListAsync();
+   {
+        // Use a transaction to ensure atomicity
+     using var transaction = await _context.Database.BeginTransactionAsync();
+    
+     try
+     {
+      // Get all active sessions for this user
+       var sessions = await _context.UserSessions
+  .Where(s => s.MemberId == memberId && s.IsActive)
+       .ToListAsync();
 
-        // Mark all sessions as inactive
-        foreach (var session in sessions)
-        {
-       session.IsActive = false;
-        }
+      // Mark all sessions as inactive
+      foreach (var session in sessions)
+            {
+      session.IsActive = false;
+   }
 
-   if (sessions.Any())
-  {
-            await _context.SaveChangesAsync();
-        }
+     if (sessions.Any())
+       {
+          await _context.SaveChangesAsync();
+     }
      
-        await transaction.CommitAsync();
+      await transaction.CommitAsync();
     }
     catch
-    {
-        await transaction.RollbackAsync();
-     throw;
+       {
+ await transaction.RollbackAsync();
+         throw;
+       }
     }
-        }
+    finally
+   {
+      // Always release the lock
+    userLock.Release();
+    }
+}
 
         public async Task<List<UserSession>> GetActiveUserSessionsAsync(int memberId)
         {
