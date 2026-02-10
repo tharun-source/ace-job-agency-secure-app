@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Test - Ace Job Agency</title>
+    <style>
+        * {
+         margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+   padding: 40px 20px;
+        }
+
+        .container {
+     max-width: 800px;
+          margin: 0 auto;
+     background: white;
+       padding: 40px;
+    border-radius: 15px;
+     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+       color: #333;
+            margin-bottom: 10px;
+       text-align: center;
+        }
+
+        .subtitle {
+          text-align: center;
+            color: #666;
+       margin-bottom: 30px;
+     }
+
+        .info-box {
+  background: #f8f9fa;
+ padding: 20px;
+     border-radius: 8px;
+         margin-bottom: 20px;
+  border-left: 4px solid #667eea;
+        }
+
+.info-box h3 {
+    color: #667eea;
+      margin-bottom: 10px;
+        }
+
+        .info-box p {
+     color: #666;
+ line-height: 1.6;
+ margin-bottom: 8px;
+      }
+
+        .session-info {
+         font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .status {
+      display: inline-block;
+        padding: 4px 12px;
+          border-radius: 20px;
+            font-size: 12px;
+   font-weight: bold;
+ margin-left: 10px;
+        }
+
+        .status.active {
+        background: #d4edda;
+            color: #155724;
+        }
+
+        .status.inactive {
+     background: #f8d7da;
+    color: #721c24;
+        }
+
+      .btn-group {
+            display: flex;
+          gap: 15px;
+        margin-top: 30px;
+       flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+    padding: 15px 30px;
+       border: none;
+  border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+  cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+   text-decoration: none;
+            display: inline-block;
+   text-align: center;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+   color: white;
+        }
+
+    .btn-secondary {
+            background: white;
+            color: #667eea;
+         border: 2px solid #667eea;
+     }
+
+        .btn-danger {
+        background: #dc3545;
+  color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+      .instructions {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+         padding: 20px;
+            border-radius: 8px;
+          margin: 30px 0;
+        }
+
+     .instructions h3 {
+         color: #856404;
+margin-bottom: 15px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+          color: #856404;
+        }
+
+        .instructions li {
+   margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .test-result {
+         background: #d1ecf1;
+      border-left: 4px solid #0c5460;
+  padding: 20px;
+            border-radius: 8px;
+       margin-top: 20px;
+        }
+
+    .test-result h3 {
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+       font-family: 'Courier New', monospace;
+         color: #e83e8c;
+      }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>?? Single Session Test Page</h1>
+   <p class="subtitle">Test multiple login prevention</p>
+
+        <div class="info-box">
+   <h3>Current Session Info</h3>
+            <p class="session-info">
+        <strong>Session ID:</strong> <span id="sessionId">Loading...</span>
+            </p>
+            <p class="session-info">
+                <strong>Member ID:</strong> <span id="memberId">Loading...</span>
+            </p>
+            <p class="session-info">
+       <strong>Email:</strong> <span id="email">Loading...</span>
+        </p>
+         <p class="session-info">
+       <strong>Status:</strong> <span id="status" class="status active">Active</span>
+            </p>
+        </div>
+
+        <div class="instructions">
+            <h3>?? How to Test Single Session Enforcement</h3>
+            <ol>
+        <li><strong>Stay on this page</strong> (keep this browser tab open)</li>
+      <li><strong>Open a NEW browser</strong> (Chrome Incognito, Firefox, Edge, etc.)</li>
+      <li><strong>Login with the SAME account</strong> you're using here</li>
+       <li><strong>Come back to THIS page</strong></li>
+          <li><strong>Click "Check Session" button below</strong></li>
+      <li><strong>Expected Result:</strong> This session should be invalidated and redirect you to login</li>
+            </ol>
+        </div>
+
+        <div class="test-result">
+      <h3>?? What Should Happen:</h3>
+            <p><strong>? Before second login:</strong> This page shows "Session Active"</p>
+         <p><strong>?? After second login:</strong> Clicking "Check Session" or refreshing should redirect you to login page</p>
+   <p><strong>? Success Criteria:</strong> You cannot be logged in on two browsers at the same time</p>
+</div>
+
+        <div class="btn-group">
+       <button onclick="checkSession()" class="btn btn-primary">?? Check Session</button>
+            <button onclick="refreshPage()" class="btn btn-secondary">?? Refresh Page</button>
+      <a href="/profile.html" class="btn btn-secondary">?? Go to Profile</a>
+            <button onclick="logout()" class="btn btn-danger">?? Logout</button>
+        </div>
+    </div>
+
+<script>
+        // Load session info on page load
+window.addEventListener('DOMContentLoaded', async () => {
+     await loadSessionInfo();
+        });
+
+        async function loadSessionInfo() {
+        try {
+         const response = await fetch('/api/member/session-info', {
+    credentials: 'include'
+       });
+
+    if (response.ok) {
+     const data = await response.json();
+        document.getElementById('sessionId').textContent = data.sessionId || 'Not available';
+           document.getElementById('memberId').textContent = data.memberId || 'Not available';
+document.getElementById('email').textContent = data.email || 'Not available';
+          document.getElementById('status').textContent = 'Active';
+        document.getElementById('status').className = 'status active';
+             } else if (response.status === 401) {
+      // Not logged in
+        document.getElementById('sessionId').textContent = 'None';
+          document.getElementById('memberId').textContent = 'None';
+       document.getElementById('email').textContent = 'None';
+     document.getElementById('status').textContent = 'Not logged in';
+     document.getElementById('status').className = 'status inactive';
+       
+         alert('You are not logged in. Please login first.');
+        window.location.href = '/login.html';
+      }
+    } catch (error) {
+           console.error('Error loading session:', error);
+       alert('Error checking session. You may need to login.');
+         window.location.href = '/login.html';
+        }
+        }
+
+     async function checkSession() {
+            await loadSessionInfo();
+      alert('Session check complete! If you were logged in elsewhere, you should be redirected to login.');
+        }
+
+        function refreshPage() {
+    location.reload();
+   }
+
+        async function logout() {
+       try {
+        const response = await fetch('/api/auth/logout', {
+               method: 'POST',
+           credentials: 'include'
+                });
+
+     if (response.ok) {
+         alert('Logged out successfully!');
+          window.location.href = '/login.html';
+      }
+     } catch (error) {
+console.error('Error logging out:', error);
+       alert('Error logging out. Please try again.');
+       }
+        }
+
+        // Auto-check session every 10 seconds
+        setInterval(async () => {
+         console.log('Auto-checking session...');
+          try {
+  const response = await fetch('/api/member/session-info', {
+              credentials: 'include'
+                });
+
+       if (response.status === 401) {
+ alert('?? Your session has been invalidated! You were likely logged in from another browser.');
+    window.location.href = '/login.html';
+        }
+      } catch (error) {
+      console.error('Error in auto-check:', error);
+            }
+        }, 10000); // Check every 10 seconds
+    </script>
+</body>
+</html>
