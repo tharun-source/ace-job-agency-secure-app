@@ -116,8 +116,9 @@ return BadRequest(new { message = "Invalid CAPTCHA. Please try again." });
   var existingMember = await _context.Members.FirstOrDefaultAsync(m => m.Email == dto.Email);
     if (existingMember != null)
    {
- await _auditService.LogActionAsync("0", "REGISTER_FAILED_DUPLICATE_EMAIL", ipAddress, userAgent, dto.Email);
-       return BadRequest(new { message = "Email address is already registered." });
+ // Security Fix: Don't log email address
+ await _auditService.LogActionAsync("0", "REGISTER_FAILED_DUPLICATE_EMAIL", ipAddress, userAgent);
+   return BadRequest(new { message = "Email address is already registered." });
       }
 
       // Validate password strength
@@ -196,7 +197,8 @@ if (resumeUpload.FilePath != null)
 // Log audit
       await _auditService.LogActionAsync(member.Id.ToString(), "REGISTER_SUCCESS", ipAddress, userAgent);
 
-    _logger.LogInformation("Registration successful for {Email}", dto.Email);
+  // Security Fix: Don't log email address
+    _logger.LogInformation("Registration successful for user ID: {MemberId}", member.Id);
     return Ok(new { message = "Registration successful! You can now login." });
    }
        catch (Exception ex)

@@ -22,13 +22,13 @@ namespace Application_Security_Asgnt_wk12.Services
    if (_configuration.GetValue<bool>("Email:UseConsoleLog"))
   {
    // Security Fix: Redact sensitive information in logs
-          var redactedEmail = RedactEmail(toEmail);
+  var redactedEmail = RedactEmail(toEmail);
      _logger.LogInformation("Password reset requested for user: {RedactedEmail}", redactedEmail);
-          Console.WriteLine($"\n========== PASSWORD RESET EMAIL ==========");
-              Console.WriteLine($"To: {redactedEmail}");
+      Console.WriteLine($"\n========== PASSWORD RESET EMAIL ==========");
+   // Security Fix: Don't output email to console
      Console.WriteLine($"Subject: Password Reset Request");
            Console.WriteLine($"Reset Link: {resetLink}");
-        Console.WriteLine($"Link expires in 15 minutes");
+   Console.WriteLine($"Link expires in 15 minutes");
             Console.WriteLine($"==========================================\n");
    return true;
     }
@@ -79,7 +79,7 @@ var fromName = _configuration["Email:FromName"];
       var redactedEmail = RedactEmail(toEmail);
    _logger.LogInformation("2FA OTP sent for user: {RedactedEmail}", redactedEmail);
     Console.WriteLine($"\n========== 2FA OTP CODE ==========");
-    Console.WriteLine($"To: {redactedEmail}");
+   // Security Fix: Don't output email to console
              Console.WriteLine($"User: {userName}");
           Console.WriteLine($"OTP Code: {otp}");
      Console.WriteLine($"Expires in: 5 minutes");

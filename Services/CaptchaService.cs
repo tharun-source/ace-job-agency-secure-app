@@ -33,9 +33,8 @@ namespace Application_Security_Asgnt_wk12.Services
   return false;
  }
 
-   // Security Fix: Log only first few characters of token
-      var tokenPreview = token.Length > 10 ? token.Substring(0, 10) + "..." : token;
-      _logger.LogInformation("Validating CAPTCHA with token: {TokenPreview}", tokenPreview);
+   // Security Fix: Don't log token at all
+   _logger.LogInformation("Validating CAPTCHA token");
 
     var response = await _httpClient.PostAsync(
        $"https://www.google.com/recaptcha/api/siteverify?secret={secretKey}&response={token}",
@@ -44,7 +43,7 @@ namespace Application_Security_Asgnt_wk12.Services
    var jsonString = await response.Content.ReadAsStringAsync();
    _logger.LogInformation("CAPTCHA response received");
 
-     var options = new JsonSerializerOptions
+   var options = new JsonSerializerOptions
      {
    PropertyNameCaseInsensitive = true
    };
@@ -57,15 +56,15 @@ namespace Application_Security_Asgnt_wk12.Services
      }
 
  if (!captchaResponse.Success)
-   {
+{
     _logger.LogWarning("CAPTCHA validation failed. Error codes: {ErrorCodes}", string.Join(", ", captchaResponse.ErrorCodes ?? Array.Empty<string>()));
-            return false;
-      }
+     return false;
+    }
 
     if (captchaResponse.Score < 0.5)
-          {
+      {
    _logger.LogWarning("CAPTCHA score too low: {Score}", captchaResponse.Score);
-           return false;
+    return false;
  }
 
           _logger.LogInformation("? CAPTCHA validation successful! Score: {Score}, Action: {Action}", captchaResponse.Score, captchaResponse.Action);
