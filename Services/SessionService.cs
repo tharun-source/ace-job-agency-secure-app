@@ -27,43 +27,53 @@ namespace Application_Security_Asgnt_wk12.Services
         public async Task<UserSession> CreateSessionAsync(int memberId, string ipAddress, string userAgent)
         {
         var sessionId = GenerateSecureSessionId();
+     Console.WriteLine($"[CreateSessionAsync] Creating NEW session for user ID: {memberId}, SessionId: {sessionId}");
      var session = new UserSession
  {
      MemberId = memberId,
     SessionId = sessionId,
-             CreatedAt = DateTime.UtcNow,
-         ExpiresAt = DateTime.UtcNow.AddMinutes(SessionTimeoutMinutes),
+           CreatedAt = DateTime.UtcNow,
+  ExpiresAt = DateTime.UtcNow.AddMinutes(SessionTimeoutMinutes),
     IpAddress = ipAddress,
-                UserAgent = userAgent,
+           UserAgent = userAgent,
     IsActive = true
-            };
+   };
 
      _context.UserSessions.Add(session);
-            await _context.SaveChangesAsync();
+   await _context.SaveChangesAsync();
+      Console.WriteLine($"[CreateSessionAsync] Session created and saved. SessionId: {sessionId}, MemberId: {memberId}, ExpiresAt: {session.ExpiresAt}, IsActive: {session.IsActive}");
 
      return session;
         }
 
         public async Task<UserSession?> GetActiveSessionAsync(string sessionId)
         {
-            var session = await _context.UserSessions
+       var session = await _context.UserSessions
    .FirstOrDefaultAsync(s => s.SessionId == sessionId);
 
          if (session == null)
-                return null;
+          {
+    Console.WriteLine($"[GetActiveSessionAsync] Session not found: {sessionId}");
+        return null;
+         }
 
  // Check if session is marked as inactive
         if (!session.IsActive)
-          return null;
+     {
+ Console.WriteLine($"[GetActiveSessionAsync] Session {sessionId} is marked as INACTIVE (MemberId: {session.MemberId})");
+       return null;
+     }
 
        // Check if session has expired
     if (session.ExpiresAt < DateTime.UtcNow)
        {
+    Console.WriteLine($"[GetActiveSessionAsync] Session {sessionId} has EXPIRED (MemberId: {session.MemberId}, ExpiredAt: {session.ExpiresAt})");
  session.IsActive = false;
        await _context.SaveChangesAsync();
-       return null;
+    return null;
   }
 
+            Console.WriteLine($"[GetActiveSessionAsync] Session {sessionId} is VALID (MemberId: {session.MemberId}, ExpiresAt: {session.ExpiresAt})");
           return session;
         }
 
@@ -123,34 +133,41 @@ var userLock = GetUserLock(memberId);
     
     try
    {
+       Console.WriteLine($"[InvalidateAllUserSessionsAsync] Starting session invalidation for user ID: {memberId}");
         // Use a transaction to ensure atomicity
-     using var transaction = await _context.Database.BeginTransactionAsync();
+   using var transaction = await _context.Database.BeginTransactionAsync();
     
      try
      {
       // Get all active sessions for this user
        var sessions = await _context.UserSessions
-  .Where(s => s.MemberId == memberId && s.IsActive)
-       .ToListAsync();
+.Where(s => s.MemberId == memberId && s.IsActive)
+     .ToListAsync();
+
+    Console.WriteLine($"[InvalidateAllUserSessionsAsync] Found {sessions.Count} active session(s) to invalidate for user ID: {memberId}");
 
       // Mark all sessions as inactive
       foreach (var session in sessions)
-            {
+  {
+           Console.WriteLine($"[InvalidateAllUserSessionsAsync] Invalidating session: {session.SessionId}");
       session.IsActive = false;
    }
 
      if (sessions.Any())
        {
-          await _context.SaveChangesAsync();
+    await _context.SaveChangesAsync();
+     Console.WriteLine($"[InvalidateAllUserSessionsAsync] Successfully invalidated {sessions.Count} session(s)");
      }
      
       await transaction.CommitAsync();
+      Console.WriteLine($"[InvalidateAllUserSessionsAsync] Transaction committed for user ID: {memberId}");
     }
-    catch
+    catch (Exception ex)
        {
+ Console.WriteLine($"[InvalidateAllUserSessionsAsync] ERROR: {ex.Message}");
  await transaction.RollbackAsync();
-         throw;
-       }
+       throw;
+     }
     }
     finally
    {

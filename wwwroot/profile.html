@@ -166,6 +166,13 @@ padding: 15px;
      <div id="successMessage" style="display: none;" class="success"></div>
      <div id="errorMessage" style="display: none;" class="alert-error"></div>
 
+        <!-- Password Expiration Warning -->
+<div id="passwordWarning" style="display: none; background-color: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+   <strong>⚠️ Password Warning:</strong>
+    <span id="passwordWarningMessage"></span>
+       <a href="change-password.html" style="color: #856404; font-weight: bold; text-decoration: underline; margin-left: 10px;">Change Password Now</a>
+   </div>
+
    <div class="profile-section">
     <h2>Personal Information</h2>
   <div id="profileData"></div>
@@ -194,8 +201,9 @@ padding: 15px;
      });
 
 if (response.ok) {
-       const profile = await response.json();
-  displayProfile(profile);
+      const data = await response.json();
+ displayProfile(data.profile);
+               displayPasswordWarning(data.passwordStatus);
   } else if (response.status === 401) {
      window.location.href = 'login.html';
    } else {
@@ -207,6 +215,29 @@ document.getElementById('errorMessage').textContent = 'Failed to load profile';
    document.getElementById('errorMessage').style.display = 'block';
  }
       }
+
+        function displayPasswordWarning(passwordStatus) {
+    if (!passwordStatus) return;
+
+            const warningDiv = document.getElementById('passwordWarning');
+ const messageSpan = document.getElementById('passwordWarningMessage');
+
+if (passwordStatus.shouldWarn && passwordStatus.daysUntilExpiration > 0) {
+    //  Warning: password expiring soon
+       let message = `Your password will expire in ${passwordStatus.daysUntilExpiration} day(s). `;
+ message += `Please change it soon to avoid being locked out.`;
+      messageSpan.textContent = message;
+ warningDiv.style.display = 'block';
+    } else if (!passwordStatus.canChange && passwordStatus.hoursUntilCanChange > 0) {
+        // Info: cannot change password yet (minimum age)
+      warningDiv.style.backgroundColor = '#d1ecf1';
+  warningDiv.style.borderColor = '#bee5eb';
+     warningDiv.style.color = '#0c5460';
+        let message = `You recently changed your password. You can change it again in ${passwordStatus.hoursUntilCanChange} hour(s).`;
+       messageSpan.textContent = message;
+        warningDiv.style.display = 'block';
+    }
+        }
 
 function displayProfile(profile) {
   // Helper function to convert UTC to Singapore Time
@@ -314,27 +345,31 @@ document.getElementById('errorMessage').textContent = 'Logout failed';
       // Load profile on page load
  loadProfile();
 
-// AUTO-CHECK SESSION EVERY 5 SECONDS
-// This will detect if the session was invalidated (e.g., logged in from another browser)
-setInterval(async () => {
+// Session validation on page visibility change
+// When user switches back to this tab, immediately check if session is still valid
+document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden) {
+        // User switched back to this tab - check session immediately
     try {
-        console.log('[Auto-check] Verifying session...');
-  const response = await fetch('https://localhost:7134/api/member/profile', {
-            method: 'GET',
-         credentials: 'include'
-      });
-
-        if (response.status === 401) {
-     console.log('[Auto-check] Session invalidated - redirecting to login');
-  alert('⚠️ Your session has been invalidated! You were likely logged in from another browser.');
-        window.location.href = 'login.html';
-        } else if (response.ok) {
-      console.log('[Auto-check] Session still valid ✓');
-      }
-    } catch (error) {
-      console.error('[Auto-check] Error checking session:', error);
+     const response = await fetch('https://localhost:7134/api/member/profile', {
+     method: 'GET',
+     credentials: 'include'
+     });
+         
+  if (response.status === 401) {
+ // Session invalid - redirect immediately
+   window.location.href = 'login.html';
+}
+        } catch (error) {
+            console.error('Session check error:', error);
+   }
     }
-}, 5000); // Check every 5 seconds
+});
+
+// NOTE: Session is also validated automatically on EVERY user interaction
+// The SessionValidationMiddleware validates sessions on EVERY API request.
+// When a user clicks any link or navigates, the middleware will immediately
+// detect if the session has been invalidated and redirect to login.
     </script>
 </body>
 </html>

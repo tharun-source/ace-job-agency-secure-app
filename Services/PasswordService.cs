@@ -116,5 +116,73 @@ namespace Application_Security_Asgnt_wk12.Services
             // Token expires in 15 minutes
             return DateTime.UtcNow.AddMinutes(15);
         }
+
+        // Password Age Policy Methods
+        public const int MinimumPasswordAgeDays = 1; // Can't change password within 1 day
+        public const int MaximumPasswordAgeDays = 90; // Must change password after 90 days
+        public const int PasswordExpirationWarningDays = 10; // Warn when 10 days left
+
+        public bool CanChangePassword(DateTime? lastPasswordChangedDate, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            if (!lastPasswordChangedDate.HasValue)
+            {
+                // First time password change or no record - allow it
+                return true;
+            }
+
+            var daysSinceLastChange = (DateTime.UtcNow - lastPasswordChangedDate.Value).TotalDays;
+
+            if (daysSinceLastChange < MinimumPasswordAgeDays)
+            {
+                var hoursRemaining = (MinimumPasswordAgeDays * 24) - (daysSinceLastChange * 24);
+                errorMessage = $"You must wait at least {MinimumPasswordAgeDays} day(s) before changing your password again. Time remaining: {Math.Ceiling(hoursRemaining)} hours.";
+                return false;
+            }
+
+            return true;
+        }
+
+        public PasswordAgeStatus GetPasswordAgeStatus(DateTime? lastPasswordChangedDate)
+        {
+            if (!lastPasswordChangedDate.HasValue)
+            {
+                return new PasswordAgeStatus
+                {
+                    IsExpired = false,
+                    DaysUntilExpiration = MaximumPasswordAgeDays,
+                    DaysSinceLastChange = 0,
+                    ShouldWarn = false,
+                    CanChange = true
+                };
+            }
+
+            var daysSinceLastChange = (DateTime.UtcNow - lastPasswordChangedDate.Value).TotalDays;
+            var daysUntilExpiration = MaximumPasswordAgeDays - daysSinceLastChange;
+            var isExpired = daysSinceLastChange >= MaximumPasswordAgeDays;
+            var shouldWarn = daysUntilExpiration <= PasswordExpirationWarningDays && daysUntilExpiration > 0;
+            var canChange = daysSinceLastChange >= MinimumPasswordAgeDays;
+
+            return new PasswordAgeStatus
+            {
+                IsExpired = isExpired,
+                DaysUntilExpiration = Math.Max(0, (int)Math.Ceiling(daysUntilExpiration)),
+                DaysSinceLastChange = (int)Math.Floor(daysSinceLastChange),
+                ShouldWarn = shouldWarn,
+                CanChange = canChange,
+                HoursUntilCanChange = canChange ? 0 : (int)Math.Ceiling((MinimumPasswordAgeDays * 24) - (daysSinceLastChange * 24))
+            };
+        }
+    }
+
+    public class PasswordAgeStatus
+    {
+        public bool IsExpired { get; set; }
+        public int DaysUntilExpiration { get; set; }
+        public int DaysSinceLastChange { get; set; }
+        public bool ShouldWarn { get; set; }
+        public bool CanChange { get; set; }
+        public int HoursUntilCanChange { get; set; }
     }
 }

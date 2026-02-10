@@ -227,11 +227,11 @@ if (resumeUpload.FilePath != null)
 
   try
     {
-         // Validate CAPTCHA
+    // Validate CAPTCHA
     var isCaptchaValid = await _captchaService.ValidateCaptchaAsync(dto.CaptchaToken);
       if (!isCaptchaValid)
-          {
-    await _auditService.LogActionAsync("0", "LOGIN_FAILED_CAPTCHA", ipAddress, userAgent);
+     {
+ await _auditService.LogActionAsync("0", "LOGIN_FAILED_CAPTCHA", ipAddress, userAgent);
           return BadRequest(new { message = "Invalid CAPTCHA. Please try again." });
      }
 
@@ -251,7 +251,7 @@ if (resumeUpload.FilePath != null)
     if (member.LockedOutUntil.HasValue && member.LockedOutUntil.Value > DateTime.UtcNow)
        {
 var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).TotalMinutes;
-           await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_FAILED_ACCOUNT_LOCKED", ipAddress, userAgent);
+      await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_FAILED_ACCOUNT_LOCKED", ipAddress, userAgent);
            return Unauthorized(new { message = $"Account is locked. Please try again after {remainingMinutes} minutes." });
         }
 
@@ -271,18 +271,24 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
 
          await _context.SaveChangesAsync();
        await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_FAILED_INVALID_PASSWORD", ipAddress, userAgent);
-       return Unauthorized(new { message = "Invalid email or password." });
+     return Unauthorized(new { message = "Invalid email or password." });
 }
 
-     // Check password age (must change password after 90 days)
+   // Check password age (must change password after 90 days)
         if (member.LastPasswordChangedDate.HasValue)
+{
+       // Check if password has expired
+var passwordAgeStatus = _passwordService.GetPasswordAgeStatus(member.LastPasswordChangedDate);
+
+     if (passwordAgeStatus.IsExpired)
   {
-      var daysSincePasswordChange = (DateTime.UtcNow - member.LastPasswordChangedDate.Value).TotalDays;
-    if (daysSincePasswordChange > 90)
-      {
- await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_REQUIRE_PASSWORD_CHANGE", ipAddress, userAgent);
-     return Unauthorized(new { message = "Your password has expired. Please reset your password.", requirePasswordChange = true });
-       }
+     await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_BLOCKED_PASSWORD_EXPIRED", ipAddress, userAgent);
+ return Unauthorized(new { 
+     message = "Your password has expired. Please reset your password using 'Forgot Password'.", 
+     requirePasswordReset = true,
+        daysExpired = passwordAgeStatus.DaysSinceLastChange - PasswordService.MaximumPasswordAgeDays
+        });
+   }
      }
 
    // Check if 2FA is enabled
@@ -290,15 +296,15 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
   {
    // Generate and send OTP
    var otpSent = await _twoFactorService.SendOtpAsync(member.Email, $"{member.FirstName} {member.LastName}");
-       
-      if (!otpSent)
+     
+  if (!otpSent)
     {
      await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_2FA_OTP_SEND_FAILED", ipAddress, userAgent);
         return StatusCode(500, new { message = "Failed to send OTP. Please try again." });
  }
         
   // Reset failed login attempts (password was correct)
-         member.FailedLoginAttempts = 0;
+       member.FailedLoginAttempts = 0;
        member.LockedOutUntil = null;
      await _context.SaveChangesAsync();
     
@@ -306,9 +312,9 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
        
     return Ok(new
   {
-     message = "OTP sent to your email. Please verify to complete login.",
+   message = "OTP sent to your email. Please verify to complete login.",
  requireOtp = true,
-         email = member.Email
+     email = member.Email
         });
   }
 
@@ -318,16 +324,19 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
       member.LastLoginDate = DateTime.UtcNow;
      await _context.SaveChangesAsync();
 
-   // Security Enhancement: Invalidate all other sessions for this user
-          // This prevents multiple simultaneous logins from different locations
+   // Security Enhancement: Invalidate all other sessions for this user FIRST
+      // This prevents multiple simultaneous logins from different locations
         // The session service uses semaphore locking to prevent race conditions
+        _logger.LogInformation("Invalidating all existing sessions for user ID: {MemberId}", member.Id);
         await _sessionService.InvalidateAllUserSessionsAsync(member.Id);
           await _auditService.LogActionAsync(member.Id.ToString(), "ALL_SESSIONS_INVALIDATED", ipAddress, userAgent);
 
-    // Create NEW session (only one should be active)
+    // Create NEW session AFTER invalidation (only one should be active)
+    _logger.LogInformation("Creating new session for user ID: {MemberId}", member.Id);
 var session = await _sessionService.CreateSessionAsync(member.Id, ipAddress, userAgent);
+        _logger.LogInformation("New session created with ID: {SessionId} for user ID: {MemberId}", session.SessionId, member.Id);
        
-    // Store session in HTTP session
+  // Store session in HTTP session
  HttpContext.Session.SetString("SessionId", session.SessionId);
        HttpContext.Session.SetInt32("MemberId", member.Id);
   HttpContext.Session.SetString("Email", member.Email);
@@ -341,14 +350,14 @@ sessionId = session.SessionId,
     member = new
          {
    id = member.Id,
-    firstName = member.FirstName,
+  firstName = member.FirstName,
     lastName = member.LastName,
   email = member.Email
-               }
+   }
      });
      }
    catch (Exception ex)
-            {
+      {
    _logger.LogError(ex, "Error during login");
      await _auditService.LogActionAsync("0", "LOGIN_ERROR", ipAddress, userAgent, ex.Message);
           return StatusCode(500, new { message = "An error occurred during login." });

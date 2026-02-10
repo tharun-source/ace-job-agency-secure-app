@@ -68,6 +68,9 @@ namespace Application_Security_Asgnt_wk12.Controllers
                 return NotFound(new { message = "Member not found." });
             }
 
+            // Get password age status
+            var passwordAgeStatus = _passwordService.GetPasswordAgeStatus(member.LastPasswordChangedDate);
+
             var profile = new MemberProfileDto
             {
                 Id = member.Id,
@@ -84,7 +87,19 @@ namespace Application_Security_Asgnt_wk12.Controllers
                 LastLoginDate = member.LastLoginDate
             };
 
-            return Ok(profile);
+            return Ok(new
+            {
+                profile = profile,
+                passwordStatus = new
+                {
+                    isExpired = passwordAgeStatus.IsExpired,
+                    daysUntilExpiration = passwordAgeStatus.DaysUntilExpiration,
+                    daysSinceLastChange = passwordAgeStatus.DaysSinceLastChange,
+                    shouldWarn = passwordAgeStatus.ShouldWarn,
+                    canChange = passwordAgeStatus.CanChange,
+                    hoursUntilCanChange = passwordAgeStatus.HoursUntilCanChange
+                }
+            });
         }
 
         [HttpPost("change-password")]
@@ -135,10 +150,11 @@ namespace Application_Security_Asgnt_wk12.Controllers
                 // Check minimum password age (cannot change within 5 minutes)
                 if (member.LastPasswordChangedDate.HasValue)
                 {
-                    var minutesSinceLastChange = (DateTime.UtcNow - member.LastPasswordChangedDate.Value).TotalMinutes;
-                    if (minutesSinceLastChange < 5)
+                    // Check if user can change password (minimum age policy)
+                    if (!_passwordService.CanChangePassword(member.LastPasswordChangedDate, out string ageError))
                     {
-                        return BadRequest(new { message = "You must wait at least 5 minutes before changing your password again." });
+                        await _auditService.LogActionAsync(member.Id.ToString(), "CHANGE_PASSWORD_BLOCKED_MIN_AGE", ipAddress, userAgent);
+                        return BadRequest(new { message = ageError });
                     }
                 }
 
