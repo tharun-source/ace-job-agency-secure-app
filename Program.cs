@@ -82,7 +82,14 @@ defaultFilesOptions.DefaultFileNames.Clear();
 defaultFilesOptions.DefaultFileNames.Add("index.html");
 app.UseDefaultFiles(defaultFilesOptions);
 
-app.UseStaticFiles();
+// Use static files with custom 404 handling
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Let StaticFileMiddleware handle existing files normally
+    }
+});
 
 app.UseRouting();
 
@@ -93,19 +100,45 @@ app.UseMiddleware<SessionValidationMiddleware>();
 
 app.UseAuthorization();
 
-// Configure 404 status code pages - BEFORE MapControllers
-app.UseStatusCodePagesWithReExecute("/404.html");
-
 app.MapControllers();
 
 // Redirect root to index page
 app.MapGet("/", () => Results.Redirect("/index.html"));
 
-// Fallback for any unmatched routes - catches everything not handled above
-app.MapFallback(async context =>
+// Custom fallback handler for all unmatched routes
+app.Use(async (context, next) =>
 {
-    context.Response.StatusCode = 404;
-    context.Response.Redirect("/404.html");
+ await next();
+  
+    // If nothing handled the request and we got a 404
+    if (context.Response.StatusCode == 404 && !context.Response.HasStarted)
+    {
+ // Check if this is an API request
+        var isApiRequest = context.Request.Path.StartsWithSegments("/api");
+    
+        if (isApiRequest)
+        {
+         // Return JSON for API requests
+            context.Response.ContentType = "application/json";
+   await context.Response.WriteAsync("{\"error\":\"Endpoint not found\",\"statusCode\":404}");
+        }
+        else
+        {
+    // Serve the 404.html page for regular requests
+    var filePath = Path.Combine(app.Environment.WebRootPath, "404.html");
+ if (File.Exists(filePath))
+    {
+    context.Response.ContentType = "text/html";
+           await context.Response.SendFileAsync(filePath);
+         }
+            else
+ {
+    // Fallback if 404.html doesn't exist
+    context.Response.ContentType = "text/html";
+     await context.Response.WriteAsync("<h1>404 - Page Not Found</h1><p>The requested page could not be found.</p>");
+   }
+     }
+    }
 });
 
 app.Run();
