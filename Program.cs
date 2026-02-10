@@ -84,6 +84,9 @@ app.UseDefaultFiles(defaultFilesOptions);
 
 app.UseStaticFiles();
 
+// Configure 404 status code pages
+app.UseStatusCodePagesWithReExecute("/404.html");
+
 app.UseRouting();
 
 app.UseCors("AllowSpecificOrigin");
@@ -97,5 +100,8 @@ app.MapControllers();
 
 // Redirect root to index page
 app.MapGet("/", () => Results.Redirect("/index.html"));
+
+// Fallback for any unmatched routes
+app.MapFallback(() => Results.Redirect("/404.html"));
 
 app.Run();

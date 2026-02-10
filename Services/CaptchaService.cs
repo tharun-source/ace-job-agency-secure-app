@@ -33,45 +33,47 @@ namespace Application_Security_Asgnt_wk12.Services
   return false;
  }
 
-      _logger.LogInformation($"Validating CAPTCHA with token: {token.Substring(0, Math.Min(20, token.Length))}...");
+   // Security Fix: Log only first few characters of token
+      var tokenPreview = token.Length > 10 ? token.Substring(0, 10) + "..." : token;
+      _logger.LogInformation("Validating CAPTCHA with token: {TokenPreview}", tokenPreview);
 
     var response = await _httpClient.PostAsync(
        $"https://www.google.com/recaptcha/api/siteverify?secret={secretKey}&response={token}",
   null);
 
-       var jsonString = await response.Content.ReadAsStringAsync();
-   _logger.LogInformation($"CAPTCHA response: {jsonString}");
+   var jsonString = await response.Content.ReadAsStringAsync();
+   _logger.LogInformation("CAPTCHA response received");
 
      var options = new JsonSerializerOptions
      {
    PropertyNameCaseInsensitive = true
-            };
+   };
      var captchaResponse = JsonSerializer.Deserialize<CaptchaResponse>(jsonString, options);
 
-          if (captchaResponse == null)
-         {
+ if (captchaResponse == null)
+   {
   _logger.LogWarning("Failed to deserialize CAPTCHA response");
-         return false;
+   return false;
      }
 
-          if (!captchaResponse.Success)
+ if (!captchaResponse.Success)
    {
-              _logger.LogWarning($"CAPTCHA validation failed. Error codes: {string.Join(", ", captchaResponse.ErrorCodes ?? Array.Empty<string>())}");
-              return false;
+    _logger.LogWarning("CAPTCHA validation failed. Error codes: {ErrorCodes}", string.Join(", ", captchaResponse.ErrorCodes ?? Array.Empty<string>()));
+            return false;
       }
 
     if (captchaResponse.Score < 0.5)
-                {
-   _logger.LogWarning($"CAPTCHA score too low: {captchaResponse.Score}");
+          {
+   _logger.LogWarning("CAPTCHA score too low: {Score}", captchaResponse.Score);
            return false;
  }
 
-          _logger.LogInformation($"? CAPTCHA validation successful! Score: {captchaResponse.Score}, Action: {captchaResponse.Action}");
+          _logger.LogInformation("? CAPTCHA validation successful! Score: {Score}, Action: {Action}", captchaResponse.Score, captchaResponse.Action);
         return true;
    }
          catch (Exception ex)
         {
-           _logger.LogError(ex, "Error validating CAPTCHA");
+   _logger.LogError(ex, "Error validating CAPTCHA");
         return false;
   }
         }

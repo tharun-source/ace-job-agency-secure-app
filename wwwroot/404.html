@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | Ace Job Agency</title>
+    <style>
+        * {
+       margin: 0;
+ padding: 0;
+            box-sizing: border-box;
+    }
+
+        body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+         display: flex;
+align-items: center;
+ justify-content: center;
+            padding: 20px;
+        }
+
+        .error-container {
+         max-width: 600px;
+      width: 100%;
+         background: white;
+          padding: 60px 40px;
+            border-radius: 15px;
+       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          text-align: center;
+    }
+
+        .error-code {
+    font-size: 120px;
+            font-weight: bold;
+       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     -webkit-background-clip: text;
+       -webkit-text-fill-color: transparent;
+            background-clip: text;
+       line-height: 1;
+            margin-bottom: 20px;
+  }
+
+        .error-icon {
+            font-size: 80px;
+      margin-bottom: 20px;
+        }
+
+        h1 {
+    color: #333;
+            font-size: 32px;
+    margin-bottom: 15px;
+        }
+
+.error-message {
+          color: #666;
+  font-size: 18px;
+        margin-bottom: 30px;
+   line-height: 1.6;
+        }
+
+        .error-details {
+  background: #f8f9fa;
+      padding: 15px;
+border-radius: 8px;
+            margin-bottom: 30px;
+ font-family: 'Courier New', monospace;
+         font-size: 14px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .button-group {
+   display: flex;
+            gap: 15px;
+     justify-content: center;
+flex-wrap: wrap;
+        }
+
+        .btn {
+    padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+ font-size: 16px;
+  font-weight: 600;
+        cursor: pointer;
+       text-decoration: none;
+      display: inline-block;
+      transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary {
+   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     color: white;
+}
+
+        .btn-secondary {
+background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+ box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .helpful-links {
+        margin-top: 40px;
+ padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .helpful-links h3 {
+       color: #333;
+       font-size: 18px;
+         margin-bottom: 15px;
+        }
+
+        .link-list {
+          display: flex;
+  flex-direction: column;
+            gap: 10px;
+        }
+
+.link-list a {
+            color: #667eea;
+  text-decoration: none;
+            font-weight: 500;
+   transition: color 0.2s;
+      }
+
+     .link-list a:hover {
+            color: #764ba2;
+   text-decoration: underline;
+        }
+
+      @media (max-width: 600px) {
+            .error-code {
+ font-size: 80px;
+         }
+
+       h1 {
+    font-size: 24px;
+         }
+
+          .error-message {
+      font-size: 16px;
+            }
+
+         .btn {
+        padding: 12px 24px;
+             font-size: 14px;
+     }
+        }
+    </style>
+</head>
+<body>
+ <div class="error-container">
+    <div class="error-icon">??</div>
+        <div class="error-code">404</div>
+ <h1>Page Not Found</h1>
+        <p class="error-message">
+            Oops! The page you're looking for doesn't exist. It might have been moved, deleted, or you may have mistyped the URL.
+        </p>
+        
+        <div class="error-details" id="errorUrl">
+  <!-- URL will be inserted here by JavaScript -->
+        </div>
+
+        <div class="button-group">
+            <a href="/index.html" class="btn btn-primary">
+   ?? Go to Homepage
+     </a>
+ <button onclick="history.back()" class="btn btn-secondary">
+          ? Go Back
+   </button>
+        </div>
+
+     <div class="helpful-links">
+            <h3>Quick Links</h3>
+         <div class="link-list">
+  <a href="/login.html">?? Login</a>
+     <a href="/register.html">?? Register</a>
+         <a href="/profile.html">?? My Profile</a>
+         <a href="/forgot-password.html">?? Reset Password</a>
+</div>
+        </div>
+    </div>
+
+    <script>
+        // Display the attempted URL
+        document.getElementById('errorUrl').textContent = `Requested URL: ${window.location.href}`;
+
+  // Log 404 error for analytics (optional)
+    console.error('404 Error:', window.location.href);
+    </script>
+</body>
+</html>

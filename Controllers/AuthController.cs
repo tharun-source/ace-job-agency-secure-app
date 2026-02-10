@@ -315,25 +315,30 @@ var remainingMinutes = (int)(member.LockedOutUntil.Value - DateTime.UtcNow).Tota
        member.LastLoginDate = DateTime.UtcNow;
      await _context.SaveChangesAsync();
 
+   // Security Enhancement: Invalidate all other sessions for this user
+          // This prevents multiple simultaneous logins from different locations
+        await _sessionService.InvalidateAllUserSessionsAsync(member.Id);
+          await _auditService.LogActionAsync(member.Id.ToString(), "ALL_SESSIONS_INVALIDATED", ipAddress, userAgent);
+
    // Create session
 var session = await _sessionService.CreateSessionAsync(member.Id, ipAddress, userAgent);
        
-        // Store session in HTTP session
+    // Store session in HTTP session
  HttpContext.Session.SetString("SessionId", session.SessionId);
        HttpContext.Session.SetInt32("MemberId", member.Id);
   HttpContext.Session.SetString("Email", member.Email);
 
          await _auditService.LogActionAsync(member.Id.ToString(), "LOGIN_SUCCESS", ipAddress, userAgent);
 
-         return Ok(new 
-      { 
+       return Ok(new 
+   { 
      message = "Login successful!",
 sessionId = session.SessionId,
     member = new
          {
-      id = member.Id,
+   id = member.Id,
     firstName = member.FirstName,
-      lastName = member.LastName,
+    lastName = member.LastName,
   email = member.Email
                }
      });

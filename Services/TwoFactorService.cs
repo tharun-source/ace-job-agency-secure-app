@@ -39,33 +39,35 @@ byte[] randomBytes = new byte[4];
 
       // Send OTP via email
         public async Task<bool> SendOtpAsync(string email, string userName)
-        {
+   {
  try
    {
-       var member = await _context.Members
-          .FirstOrDefaultAsync(m => m.Email == email);
+    var member = await _context.Members
+   .FirstOrDefaultAsync(m => m.Email == email);
 
-                if (member == null)
+       if (member == null)
      return false;
 
        // Generate OTP
-          var otp = GenerateOtp();
+    var otp = GenerateOtp();
 
      // Store OTP in database
      member.CurrentOtp = otp;
      member.OtpExpiry = DateTime.UtcNow.AddMinutes(OtpExpiryMinutes);
-                await _context.SaveChangesAsync();
+await _context.SaveChangesAsync();
 
               // Send email
 var emailSent = await _emailService.SendOtpEmailAsync(email, otp, userName);
 
-          _logger.LogInformation($"OTP sent to {email}: {otp} (expires in {OtpExpiryMinutes} minutes)");
+     // Security Fix: Don't log sensitive OTP information
+    _logger.LogInformation("OTP sent for 2FA authentication (expires in {Minutes} minutes)", OtpExpiryMinutes);
 
           return emailSent;
           }
     catch (Exception ex)
       {
-           _logger.LogError(ex, $"Error sending OTP to {email}");
+   // Security Fix: Don't log email in error messages
+           _logger.LogError(ex, "Error sending OTP for 2FA");
       return false;
       }
         }
@@ -78,41 +80,45 @@ var emailSent = await _emailService.SendOtpEmailAsync(email, otp, userName);
     var member = await _context.Members
    .FirstOrDefaultAsync(m => m.Email == email);
 
-                if (member == null)
-             return false;
+         if (member == null)
+ return false;
 
   // Check if OTP exists and is not expired
   if (string.IsNullOrEmpty(member.CurrentOtp) || 
    member.OtpExpiry == null || 
-           member.OtpExpiry < DateTime.UtcNow)
-             {
-   _logger.LogWarning($"OTP expired or missing for {email}");
-        return false;
+     member.OtpExpiry < DateTime.UtcNow)
+  {
+      // Security Fix: Don't log email
+   _logger.LogWarning("OTP expired or missing for 2FA attempt");
+   return false;
     }
 
-        // Validate OTP
+     // Validate OTP
        bool isValid = member.CurrentOtp == otp;
 
-       if (isValid)
-                {
-         // Clear OTP after successful validation
+   if (isValid)
+        {
+    // Clear OTP after successful validation
    member.CurrentOtp = null;
-           member.OtpExpiry = null;
+   member.OtpExpiry = null;
           await _context.SaveChangesAsync();
-        _logger.LogInformation($"OTP validated successfully for {email}");
+     // Security Fix: Don't log email
+        _logger.LogInformation("OTP validated successfully for 2FA");
          }
     else
     {
-   _logger.LogWarning($"Invalid OTP attempt for {email}");
+   // Security Fix: Don't log email
+      _logger.LogWarning("Invalid OTP attempt for 2FA");
       }
 
-                return isValid;
+          return isValid;
         }
      catch (Exception ex)
             {
-   _logger.LogError(ex, $"Error validating OTP for {email}");
-                return false;
-            }
+  // Security Fix: Don't log email
+   _logger.LogError(ex, "Error validating OTP for 2FA");
+      return false;
+      }
       }
 
         // Enable 2FA for a member
